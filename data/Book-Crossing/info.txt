@@ -1,0 +1,1 @@
+user(17860) item(14967) inte(139746) avg u inte(7.824524076147816) avg i inte(9.336941270795752) enti(77903) rela(25) trip(151500)
