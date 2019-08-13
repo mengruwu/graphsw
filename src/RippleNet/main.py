@@ -45,11 +45,13 @@ parser.add_argument('--k_list', type=int, nargs='+', default=[25, 50], help='whe
 parser.add_argument('--n_pop_item_eval', type=int, default=500, help='popular items for topk evalution')
 parser.add_argument('--n_user_eval', type=int, default=250, help='users for topk evalution')
 
+# misc
+parser.add_argument('--show_save_dataset_info', type=bool, default=False, help='show and save dataset information')
 
 def run(args, logger, tag, load_emb=False, refresh_score=True, refresh_interaction=True):
 	args.load_emb = load_emb
 	data = load_data(args)
-	logger.update_cur_train_info(args, refresh_score=refresh_score, refresh_interaction=refresh_interaction, entity_interaction_dict=data[-2], all_user_entity_count=data[-1])
+	logger.update_cur_train_info(args, refresh_score=refresh_score, refresh_interaction=refresh_interaction, user_ere_interaction_dict=data[-2], all_user_entity_count=data[-1])
 	train(args, data, logger)
 	logger.check_refresh_state()
 	if not args.load_emb or logger.check_early_stop(args.stage_early_stop):
@@ -58,7 +60,7 @@ def run(args, logger, tag, load_emb=False, refresh_score=True, refresh_interacti
 	gc.collect()
 
 def main_sw(args, logger):
-	tags = ['h1', 'h1 sw']
+	tags = ['origin', 'graphsw']
 	logger.init_scores(tags)
 	tolerance = args.tolerance
 	early_stop = args.early_stop
@@ -68,17 +70,15 @@ def main_sw(args, logger):
 		# w/o SW	
 		args.tolerance = tolerance
 		args.early_stop = early_stop
-		tags_num = 0
-		run(args, logger, tags[tags_num])
+		run(args, logger, tags[0])
 
 		# SW
 		args.tolerance = 0
 		args.early_stop = 2
-		tags_num = 1
 		stage = 0
 		logger.start_early_stop()
 		while True:
-			run(args, logger, tags[tags_num], load_emb=True, refresh_score=(stage == 0), refresh_interaction=(stage == 0))
+			run(args, logger, tags[1], load_emb=True, refresh_score=(stage == 0), refresh_interaction=False)
 			stage += 1
 			if logger.check_early_stop(args.stage_early_stop):
 				break
@@ -87,7 +87,6 @@ def main_sw(args, logger):
 
 if __name__ == "__main__":
 	args = parser.parse_args()
-	args.topk_eval = False
 	path = Path(args.dataset)
 	args.path = path
 	

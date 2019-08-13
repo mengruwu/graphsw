@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=1
 gpu_fract=.2
 
 dataset="Book-Crossing"
@@ -6,12 +6,13 @@ dataset="Book-Crossing"
 dim=8
 n_hop=1
 n_memory=8
-l2_weight=1e-5
+l2_weight=1e-6
 
 # learning parameter setting
-lr=2e-4
+lr=5e-4
 tolerance=0
-early_stop=5
+early_stop=3
+stage_early_stop=1
 batch_size=1024
 
 # log file setting
@@ -29,6 +30,7 @@ cmd="python3 main.py
     --batch_size $batch_size
     --lr $lr
     --early_stop $early_stop
+    --stage_early_stop $stage_early_stop
     --tolerance $tolerance
     --emb_name $emb_name
     --log_name $log_name"

@@ -11,18 +11,19 @@ import random
 def load_data(args):
     train_data, eval_data, test_data, user_history_dict, n_item, n_user, n_interaction, avg_u_inte, avg_i_inte = load_rating(args)
     n_entity, n_relation, n_triple, kg = load_kg(args)
-    print('*' * 120)
-    print(f'user({n_user}) item({n_item}) inte({n_interaction}) avg u inte({round(avg_u_inte, 1)}) avg i inte({round(avg_i_inte, 1)})')
-    print(f'enti({n_entity}) rela({n_relation}) trip({n_triple})')
-    print('*' * 120)
-    with open(args.path.data + 'info.txt', 'w') as f:
-        f.write(f'user({n_user}) item({n_item}) inte({n_interaction}) avg u inte({avg_u_inte}) avg i inte({avg_i_inte}) ')
-        f.write(f'enti({n_entity}) rela({n_relation}) trip({n_triple})')
-    ripple_set, entity_interaction_dict = get_ripple_set(args, kg, user_history_dict)
-
+    if args.show_save_dataset_info:
+        print('*' * 120)
+        print(f'user({n_user}) item({n_item}) inte({n_interaction}) avg u inte({round(avg_u_inte, 1)}) avg i inte({round(avg_i_inte, 1)})')
+        print(f'enti({n_entity}) rela({n_relation}) trip({n_triple})')
+        print('*' * 120)
+        with open(args.path.data + 'info.txt', 'w') as f:
+            f.write(f'user({n_user}) item({n_item}) inte({n_interaction}) avg u inte({avg_u_inte}) avg i inte({avg_i_inte}) ')
+            f.write(f'enti({n_entity}) rela({n_relation}) trip({n_triple})')
+            
+    ripple_set, user_ere_interaction_dict = get_ripple_set(args, kg, user_history_dict)
     all_user_entity_count = get_all_user_entity_count(user_history_dict, kg, hop=args.n_hop)
 
-    return train_data, eval_data, test_data, n_item, n_user, n_entity, n_relation, ripple_set, entity_interaction_dict, all_user_entity_count
+    return train_data, eval_data, test_data, n_item, n_user, n_entity, n_relation, ripple_set, user_ere_interaction_dict, all_user_entity_count
 
 
 def load_rating(args):
@@ -35,7 +36,7 @@ def load_rating(args):
         rating_np = np.loadtxt(rating_file + '.txt', dtype=np.int64)
         np.save(rating_file + '.npy', rating_np)
 
-    if not os.path.exists(f'{args.path.misc}pop_item_{args.n_pop_item_eval}.pickle'):
+    if args.topk_eval and not os.path.exists(f'{args.path.misc}pop_item_{args.n_pop_item_eval}.pickle'):
         with open(f'{args.path.misc}pop_item_{args.n_pop_item_eval}.pickle', 'wb') as f:
             item_counter = {}
             for _, i, _ in rating_np:
@@ -176,20 +177,20 @@ def get_ripple_set(args, kg, user_history_dict):
     print('constructing ripple set ...')
     # user -> [(hop_0_heads, hop_0_relations, hop_0_tails), (hop_1_heads, hop_1_relations, hop_1_tails), ...]
     ripple_set = collections.defaultdict(list)
-    entity_interaction_dict = collections.defaultdict(list)
+    user_ere_interaction_dict = collections.defaultdict(list)
     global g_kg
     g_kg = kg
-    with mp.Pool(processes=min(mp.cpu_count(), 12)) as pool:
+    with mp.Pool(processes=min(mp.cpu_count(), 8)) as pool:
         job = partial(_get_ripple_set, n_hop=args.n_hop, n_memory=args.n_memory, n_neighbor=16)
         for u, u_r_set, u_interaction_list in pool.starmap(job, user_history_dict.items()):
             ripple_set[u] = np.array(u_r_set, dtype=np.int32)
-            entity_interaction_dict[u] = u_interaction_list
+            user_ere_interaction_dict[u] = u_interaction_list
     del g_kg
-    return ripple_set, entity_interaction_dict
+    return ripple_set, user_ere_interaction_dict
 
 def _get_ripple_set(user, history, n_hop=2, n_memory=32, n_neighbor=16):
     ret = []
-    entity_interaction_list = []
+    ere_interaction_list = []
     for h in range(n_hop):
         memories_h = []
         memories_r = []
@@ -218,7 +219,7 @@ def _get_ripple_set(user, history, n_hop=2, n_memory=32, n_neighbor=16):
             memories_h = [memories_h[i] for i in indices]
             memories_r = [memories_r[i] for i in indices]
             memories_t = [memories_t[i] for i in indices]
-            entity_interaction_list += zip(memories_h, memories_r, memories_t)
+            ere_interaction_list += zip(memories_h, memories_r, memories_t)
             ret.append([memories_h, memories_r, memories_t])
             
-    return [user, ret, list(set(entity_interaction_list))]
+    return [user, ret, list(set(ere_interaction_list))]
