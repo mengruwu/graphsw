@@ -89,8 +89,10 @@ class Train_info_record:
 
         self.avg_user_entity_interaction = dict()
         self.avg_user_entity_interaction_tmp = 0
-        self.entity_interaction_dict = dict()
+        self.user_ere_interaction_dict = dict()
 
+        self.user_ere_interaction = dict()
+        self.user_ere_interaction_tmp = 0
         self.user_entity_interaction = dict()
         self.user_entity_interaction_tmp = 0
 
@@ -134,17 +136,21 @@ class Train_info_record:
             self.scores[tag] = {m: 0. for m in self.eval_methods}
             for m in self.topk_methods:
                 self.scores[tag][m] = [0.] * len(self.k_list)
+            self.scores[tag]['ere'] = 0
 
             self.scores_best[tag] = {method: 0. for method in self.eval_methods}
             for m in self.topk_methods:
                 self.scores_best[tag][m] = [0.] * len(self.k_list)
+            self.scores_best[tag]['ere'] = 0
+
             self.avg_user_entity_interaction[tag] = 0
             self.user_entity_interaction[tag] = 0
+            self.user_ere_interaction[tag] = 0
             self.explored_rate[tag] = 0.
         self.tags = tags
             
     
-    def update_cur_train_info(self, args, refresh_score=True, refresh_interaction=True, entity_interaction_dict={}, all_user_entity_count=1):
+    def update_cur_train_info(self, args, refresh_score=True, refresh_interaction=True, user_ere_interaction_dict={}, all_user_entity_count=1):
         self.is_refrsh = False
         
         self.all_user_entity_count = all_user_entity_count
@@ -153,29 +159,37 @@ class Train_info_record:
                 self.scores_best_tmp[t] = {m: 0. for m in self.eval_methods}
                 for m in self.topk_methods:
                     self.scores_best_tmp[t][m] = [0.] * len(self.k_list)
+            self.scores_best_tmp['ere'] = 0
             
         if refresh_interaction:
-            self.entity_interaction_dict = entity_interaction_dict
+            self.user_ere_interaction_dict = user_ere_interaction_dict
         else:
-            self.entity_interaction_dict = {u: list(set(e_d + self.entity_interaction_dict[u]))  for u, e_d in entity_interaction_dict.items()}
+            self.user_ere_interaction_dict = {u: list(set(e_d + self.user_ere_interaction_dict[u]))  for u, e_d in user_ere_interaction_dict.items()}
         
         user_e_count = 0
         # ere is entity relation entity
+        user_ere_count = 0
         user_ere_set = set()
-        for ere_list in self.entity_interaction_dict.values():
+        
+        for ere_list in self.user_ere_interaction_dict.values():
             user_e_list = np.array([[h, t] for h, _, t in ere_list]).flatten()
             user_e_count += np.unique(user_e_list).shape[0]
+            user_ere_count += len(set(ere_list))
             user_ere_set.update(ere_list)
+        
         self.user_entity_interaction_tmp = user_e_count
-        self.avg_user_entity_interaction_tmp = user_e_count / len(self.entity_interaction_dict.keys())
+        self.user_ere_interaction_tmp = user_ere_count
+        self.avg_user_entity_interaction_tmp = user_e_count / len(self.user_ere_interaction_dict.keys())
         self.explored_rate_tmp = len(user_ere_set) / all_user_entity_count * 100
 
         log_list = [f'{c}: {getattr(args, c)}' for c in self.dynamic_info]
         log_str = f'Time: {time.strftime(self.time_format)}'
         for i, log in enumerate(log_list, 1):
             log_str += ', ' + log + ('\n' if i % 6 == 0 else '')
-        log_str += ('\n avg i.e.: %.1f' % (self.avg_user_entity_interaction_tmp))
-        log_str += (' | total i.e.: %d' % (self.user_entity_interaction_tmp))
+        log_str += '\n'
+        # log_str += ('avg i.e.: %.1f' % (self.avg_user_entity_interaction_tmp))
+        # log_str += (' | total i.e.: %d' % (self.user_entity_interaction_tmp))
+        log_str += ('ere: %d' % (self.user_ere_interaction_tmp))
         log_str += (' | e.r.: %.2f%%' % (self.explored_rate_tmp))
         print(log_str)
         
@@ -218,6 +232,7 @@ class Train_info_record:
             for m in self.eval_methods:
                 self.scores_best_tmp['eval'][m] = scores['eval'][m]
                 self.scores_best_tmp['test'][m] = scores['test'][m]
+            self.scores_best_tmp['ere'] = self.user_ere_interaction_tmp
 
     def train_over(self, tag):
         log = 'Best'
@@ -242,15 +257,15 @@ class Train_info_record:
         with open(self.folder_path_best, 'a') as f:
             f.write(log + '\n')
         
-
-
         for m in self.eval_methods:
             self.scores_best[tag][m] += self.scores_best_tmp['test'][m]
         for m in self.topk_methods:
             for k in range(len(self.k_list)):
                 self.scores_best[tag][m][k] += self.scores_best_tmp['test'][m][k]
+        self.scores_best[tag]['ere'] += self.scores_best_tmp['ere']
         self.avg_user_entity_interaction[tag] += self.avg_user_entity_interaction_tmp
         self.user_entity_interaction[tag] += self.user_entity_interaction_tmp
+        self.user_ere_interaction[tag] += self.user_ere_interaction_tmp
         self.explored_rate[tag] += self.explored_rate_tmp
         
 
@@ -270,9 +285,11 @@ class Train_info_record:
                 for m in self.topk_methods:
                     s = self.topk_score_transform([self.scores_best[tag][m][k]/self.counter for k in range(len(self.k_list))])
                     log += '%s|%s|' % (m, s)
-            log += ('|avg i.e.|% 4.1f|e.r.|% 3.1f%%|' % (self.avg_user_entity_interaction[tag]/self.counter, self.explored_rate[tag]/self.counter))
+            log += ('|ere|%d|' % (self.scores_best[tag]['ere']/self.counter))
             log += '\n'
+        print('*' * 120)
         print(log)
+        print('*' * 120)
 
         with open(self.folder_path_best, 'a') as f:
             f.write(log)

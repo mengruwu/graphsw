@@ -29,15 +29,15 @@ class RippleNet(object):
         self.item_update_mode = args.item_update_mode
         self.using_all_hops = args.using_all_hops
 
-        self.emb = args.path.emb
+        self.emb_path = args.path.emb
 
         if args.emb_name == '':
-            self.emb_name = f'sw_m_{args.n_memory}_d_{args.dim}'
+            self.emb_name = f'h${args.n_hop}_d${args.dim}_m${args.n_memory}_sw'
         else:
             self.emb_name = args.emb_name
     
-        self.pretrained_enti_emb = f'{self.emb}enti_emb_{self.emb_name}.npy'
-        self.pretrained_rela_emb = f'{self.emb}rela_emb_{self.emb_name}.npy'
+        self.pretrained_enti_emb = f'{self.emb_path}enti_emb_{self.emb_name}.npy'
+        self.pretrained_rela_emb = f'{self.emb_path}rela_emb_{self.emb_name}.npy'
 
     def _build_inputs(self):
         self.items = tf.placeholder(dtype=tf.int32, shape=[None], name='items')
@@ -49,17 +49,7 @@ class RippleNet(object):
         self.memories_h = [d['memories_h_' + str(hop)] for hop in range(self.n_hop)]
         self.memories_r = [d['memories_r_' + str(hop)] for hop in range(self.n_hop)]
         self.memories_t = [d['memories_t_' + str(hop)] for hop in range(self.n_hop)]
-        # self.memories_r = []
-        # self.memories_t = []
-
-        # for hop in range(self.n_hop):
-        #     self.memories_h.append(
-        #         tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_h_" + str(hop)))
-        #     self.memories_r.append(
-        #         tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_r_" + str(hop)))
-        #     self.memories_t.append(
-        #         tf.placeholder(dtype=tf.int32, shape=[None, self.n_memory], name="memories_t_" + str(hop)))
-
+        
     def save_pretrained_emb(self, sess):
         enti_emb = sess.run(self.entity_emb_matrix)
         np.save(self.pretrained_enti_emb, enti_emb)

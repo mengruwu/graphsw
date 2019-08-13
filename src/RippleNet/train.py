@@ -15,8 +15,8 @@ def train(args, data_info, logger):
     n_item, n_user = data_info[3], data_info[4]
     n_entity, n_relation = data_info[5], data_info[6]
     ripple_set = data_info[7]
-
-    print(f'train({len(train_data)}), eval({len(eval_data)}), test({len(test_data)})')
+    if args.show_save_dataset_info:
+        print(f'train({len(train_data)}), eval({len(eval_data)}), test({len(test_data)})')
 
     if args.topk_eval:
         _, eval_record, test_record, topk_data = topk_settings(args, train_data, eval_data, test_data, n_item)
@@ -78,13 +78,13 @@ def train(args, data_info, logger):
             early_stop_score = scores['eval']['auc']
 
             logger.update_score(epoch, scores)
-
-            if early_stop_score >= early_stop.best_score:
-                print('save embs ...')
-                model.save_pretrained_emb(sess)
             
             print('training time: %.1fs' % (t_flag - t_start), end='') 
             print(', total: %.1fs.' % (time() - t_start))
+
+            if early_stop_score >= early_stop.best_score:
+                print('save embs ...', end='\r')
+                model.save_pretrained_emb(sess)
 
             if early_stop.update_score(epoch, early_stop_score) == True: break
         
@@ -191,6 +191,7 @@ def topk_evaluation(sess, model, dataset, eval_user_dict, test_user_dict, k_list
             topk_scores['test']['p'][k].append(test_hit_num / k)
             topk_scores['test']['r'][k].append(test_hit_num / len(test_user_dict[u]))
             topk_scores['test']['ndcg'][k].append(ndcg_at_k(test_r_hit, k))
+
     for t in ['eval', 'test']:
         for m in ['p', 'r', 'ndcg']:
             topk_scores[t][m] = [np.around(np.mean(topk_scores[t][m][k]), decimals=4) for k in k_list]
