@@ -2,16 +2,8 @@
 
 This repository is the implementation of GraphSW ([arXiv](https://arxiv.org/abs/1908.05611)):
 
-![image](https://github.com/mengruwu/graphsw/blob/master/framwork.png)
-![image](https://github.com/mengruwu/graphsw/blob/master/performance.png)
-
-# GraphSW
-
-This repository is the implementation of GraphSW ([arXiv](https://arxiv.org/abs/1908.05611)):
-
-![image](https://github.com/mengruwu/graphsw/blob/master/framwork.png)
-
-
+![image](https://github.com/mengruwu/graphsw-dev/blob/master/framwork.png)
+![image](https://github.com/mengruwu/graphsw-dev/blob/master/performance.png)
 
 ### Files in the folder
 
