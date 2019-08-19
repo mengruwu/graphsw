@@ -1,62 +1,46 @@
-# KGCN / KGCN-LS
+# GraphSW
 
-This repository is the implementation of KGCN and KGCN-LS.
+This repository is the implementation of GraphSW ([arXiv](https://arxiv.org/abs/1908.05611)):
+
+![image](https://github.com/mengruwu/graphsw/blob/master/framwork.png)
+![image](https://github.com/mengruwu/graphsw/blob/master/performance.png)
+
+# GraphSW
+
+This repository is the implementation of GraphSW ([arXiv](https://arxiv.org/abs/1908.05611)):
+
+![image](https://github.com/mengruwu/graphsw/blob/master/framwork.png)
+
 
 
 ### Files in the folder
 
-- `data/`
-  - `movie/`
-    - `item_index2entity_id.txt`: the mapping from item indices in the raw rating file to entity IDs in the KG;
-    - `kg.txt`: knowledge graph file;
+- `data/`: datasets
+  - `Book-Crossing/`
+  - `MovieLens-1M/`
+  - `amazon-book_20core/`
+  - `last-fm_50core/`
   - `music/`
-    - `item_index2entity_id.txt`: the mapping from item indices in the raw rating file to entity IDs in the KG;
-    - `kg.txt`: knowledge graph file;
-    - `user_artists.dat`: raw rating file of Last.FM;
-  - `restaurant/`
-    - `Dianping-Food.zip`: containing the final rating file and the final KG file;
-- `src/`: implementations of KGCN and KGCN-LS.
+  - `yelp2018_20core/`
+- `src/`: implementation of GraphSW.
+- `output/`: storing log files
+- `misc/`: storing users being evaluating, popular items, and sharing embedding.
 
+### Build the environment(conda)
 
-
-
-### Running the code
-- Movie  
-  (The raw rating file of MovieLens-20M is too large to be contained in this repository.
-  Download the dataset first.)
+```
+$ cd graph-stage
+$ conda deactivate
+$ conda create -f requirements.yml
+$ conda activate graph-stage
+```
+- RippleNet
   ```
-  $ wget http://files.grouplens.org/datasets/movielens/ml-20m.zip
-  $ unzip ml-20m.zip
-  $ mv ml-20m/ratings.csv data/movie/
-  $ cd src
-  $ python preprocess.py --dataset movie
-  $ python main.py (settings for KGCN and KGCN-LS are different. Plase carefully choose the corresponding code blocks in main.py)
+  $ cd src/RippleNet/
+  $ bash RippleNet_{dataset}.sh
   ```
-- Music
-  - ```
-    $ cd src
-    $ python preprocess.py --dataset music
-    ```
-  - open `src/main.py` file;
-    
-  - comment the code blocks of parameter settings for MovieLens-20M;
-    
-  - uncomment the code blocks of parameter settings for Last.FM;
-    
-  - ```
-    $ python main.py (settings for KGCN and KGCN-LS are different. Plase carefully choose the corresponding code blocks in main.py)
-    ```
-- Restaurant  
+- KGCN
   ```
-  $ cd data/restaurant
-  $ unzip Dianping-Food.zip
+  $ cd src/KGCN/
+  $ bash main_{dataset}.sh
   ```
-  - open `src/main.py` file;
-    
-  - comment the code blocks of parameter settings for MovieLens-20M;
-    
-  - uncomment the code blocks of parameter settings for Dianping-Food;
-    
-  - ```
-    $ python main.py (settings for KGCN and KGCN-LS are different. Plase carefully choose the corresponding code blocks in main.py)
-    ```
