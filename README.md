@@ -1,6 +1,7 @@
 # GraphSW
 
 This repository is the implementation of GraphSW ([arXiv](https://arxiv.org/abs/1908.05611)):
+> Chang-You Tai, Meng-Ru Wu, Yun-Wei Chu, Shao-Yu Chu, and Lun-Wei Ku.2018. GraphSW: a training protocol based on stage-wise training for GNN-based Recommender Model.
 ## Introduction
 We propose GraphSW, a strategy based on stage-wise training framework which would only access to a subset of the entities in KG in everystage. During the following stages, the learned embedding from previous stages is provided to the network in the next stage and the model can learn the information gradually from the KG.
 ![image](https://github.com/mengruwu/graphsw-dev/blob/master/framwork.png)
