@@ -6,8 +6,7 @@ class Path:
         self.misc = f'../../misc/{dataset}/'
         self.emb = f'../../misc/{dataset}/emb/'
         self.output = f'../../output/KGCN/{dataset}/'
-        
-        self.check_dir(f'../../output/KGCN/')
+
         self.check_dir(self.data)
         self.check_dir(self.misc)
         self.check_dir(self.emb)
